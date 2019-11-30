@@ -1,0 +1,9 @@
+;1: celsius and fahrenheit conversions
+(define (c2f cels) (+ 32 (* cels 9/5)))
+(define (f2c fahr) (/ (- fahr 32) 9/5))
+
+;2 dist from origin
+(define (dist x y) (sqrt (+ (expt x 2) (expt y 2))))
+
+;3 maximum without max() or conditionals
+
