@@ -1,77 +1,11 @@
-globals [score printscore difficulty curr-value filename colorscheme portalx portaly]
-patches-own [lifespan]
+globals [curr-value  filename]
 
-to setup
-  ca
-  cro 1 [
-    set hidden? true
-  ]
-  ask one-of patches with [distancexy 0 0 > 5 and abs pxcor != 16 and abs pycor != 16] [
-    set pcolor green
-  ]
-  ask patches with [abs pxcor = 16 or abs pycor = 16] [set pcolor gray]
-  set score 2
-  set difficulty 1
-  set colorscheme "black"
-  make-portals
-end
-
-to go
-  background
-  let going true
-  ask turtles [
-    fd 1
-    set lifespan score * 2
-    if pcolor = green [
-      set score score + 1
-      set difficulty difficulty + .07
-      ask one-of patches with [distancexy 0 0 > 5 and abs pxcor != 16 and abs pycor != 16 and pcolor != red] [
-        set pcolor green
-      ]
-    ]
-    if pcolor = red or pcolor = gray [
-      set going false
-    ]
-    if pcolor = 85 [
-     set pcolor black
-      ask one-of patches with [pcolor = 85] [
-       set portalx pxcor
-       set portaly pycor
-      ]
-      setxy portalx portaly
-      set colorscheme one-of ["yellow" "orange" "black"]
-      set score score + 1
-      make-portals
-    ]
-    set pcolor red
-   ]
-  ask patches with [pcolor = red] [
-    set lifespan lifespan - 1
-    if lifespan < 0 [
-      set pcolor black
-    ]
-  ]
-
-  if going = false [
-    set printscore score - 2
-    read-value
-    if printscore > curr-value [write-value]
-    ask turtle 0 [die]
-    cp
-    ask patch 4 0 [set plabel "Game Over"]
-    ask patch -6 -5 [set plabel "Score:"]
-    ask patch 4 -5 [set plabel printscore]
-    stop
-  ]
-  wait .1 / difficulty
-  background
-end
 
 to read-value
   ; let's check whether there's a file named "fred.txt"..
-  ifelse file-exists? "top-score.txt"
+  ifelse file-exists? "fred.txt"
   [  ; OK, it exists, let's open it up and read it
-    file-open "top-score.txt"
+    file-open "fred.txt"
     set curr-value file-read
     ; and close the file
     file-close
@@ -82,46 +16,25 @@ to read-value
 end
 
 to write-value
-  if file-exists? "top-score.txt" [file-delete "top-score.txt"]
+  ; delete the file if it already exists
+  if file-exists? "fred.txt" [file-delete "fred.txt"]
   ; now open (create)  it  to write to it
-  file-open "top-score.txt"
+  file-open "fred.txt"
   ; write out the value and close
-  file-print printscore
+  file-print new-value
   file-close
-end
-
-to background
-  if colorscheme = "yellow" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
-      set pcolor one-of [40 41]
-    ]
-  ]
-  if colorscheme = "orange" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
-      set pcolor one-of [20 21]
-    ]
-  ]
-  if colorscheme = "black" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
-      set pcolor 0
-    ]
-  ]
-end
-
-to make-portals
-  ask n-of 2 patches with [pcolor != red and pcolor != green and pcolor != gray] [set pcolor cyan]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-388
-61
-825
-499
+367
+47
+462
+143
 -1
 -1
-13.0
+2.64
 1
-32
+10
 1
 1
 1
@@ -139,128 +52,75 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-BUTTON
-263
-140
-326
-173
-go
-go
-T
-1
-T
-OBSERVER
-NIL
-K
-NIL
-NIL
+TEXTBOX
+38
+48
+188
+111
+Saving values to files and reading them.
+17
+0.0
 1
 
 BUTTON
-263
-98
-326
-131
-NIL
-setup\n
+52
+149
+208
+182
+Read value from file...
+read-value
 NIL
 1
 T
 OBSERVER
 NIL
-J
 NIL
-NIL
-1
-
-BUTTON
-89
-91
-152
-124
-Up
-if heading != 180 [\nset heading 0\n]
-NIL
-1
-T
-TURTLE
-NIL
-W
 NIL
 NIL
 1
 
 BUTTON
-164
-139
-227
-172
-Right
-if heading != 270 [\nset heading 90\n]\n
+56
+244
+185
+277
+Write value to file
+write-value
 NIL
 1
 T
-TURTLE
+OBSERVER
 NIL
-D
+NIL
 NIL
 NIL
 1
 
-BUTTON
-22
-139
-85
-172
-Left
-if heading != 90 [\nset heading 270\n]
-NIL
+SLIDER
+52
+198
+224
+231
+new-value
+new-value
 1
-T
-TURTLE
-NIL
-A
-NIL
-NIL
+100
+45.0
 1
-
-BUTTON
-91
-139
-154
-172
-Down
-if heading != 0 [\nset heading 180\n]
-NIL
 1
-T
-TURTLE
 NIL
-S
-NIL
-NIL
-1
+HORIZONTAL
 
 MONITOR
-23
-193
-85
-238
-score
-score - 2
+278
+200
+457
+269
+Current value in file
+curr-value
+0
+1
 17
-1
-11
-
-TEXTBOX
-220
-104
-370
-122
-Game Over
-55
-9.9
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -604,7 +464,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
