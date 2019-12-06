@@ -1,4 +1,4 @@
-globals [score printscore difficulty curr-value filename colorscheme portalx portaly]
+globals [score printscore difficulty L filename colorscheme portalx portaly going]
 patches-own [lifespan]
 
 to setup
@@ -9,17 +9,26 @@ to setup
   ask one-of patches with [distancexy 0 0 > 5 and abs pxcor != 16 and abs pycor != 16] [
     set pcolor green
   ]
+
   ask patches with [abs pxcor = 16 or abs pycor = 16] [set pcolor gray]
   set score 2
   set difficulty 1
   set colorscheme "black"
+  makeSlow
   make-portals
+  cro 1 [
+    set shape "square"
+    set color red
+  ]
+  read-value
 end
 
 to go
   background
-  let going true
-  ask turtles [
+  if going = false [stop]
+  set going true
+  ask turtle 1 [set hidden? true]
+  ask turtle 0 [
     fd 1
     set lifespan score * 2
     if pcolor = green [
@@ -43,6 +52,10 @@ to go
       set score score + 1
       make-portals
     ]
+    if pcolor = brown [
+      set difficulty difficulty - .05
+      makeSlow
+    ]
     set pcolor red
    ]
   ask patches with [pcolor = red] [
@@ -54,8 +67,7 @@ to go
 
   if going = false [
     set printscore score - 2
-    read-value
-    if printscore > curr-value [write-value]
+    if printscore > L [read-value write-value]
     ask turtle 0 [die]
     cp
     ask patch 4 0 [set plabel "Game Over"]
@@ -72,12 +84,12 @@ to read-value
   ifelse file-exists? "top-score.txt"
   [  ; OK, it exists, let's open it up and read it
     file-open "top-score.txt"
-    set curr-value file-read
+    set L file-read
     ; and close the file
     file-close
   ]
   [ ;  nope, no such file, set the curr-value to -1
-    set curr-value -1
+    set L 0
   ]
 end
 
@@ -92,17 +104,17 @@ end
 
 to background
   if colorscheme = "yellow" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
+    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan and pcolor != brown] [
       set pcolor one-of [40 41]
     ]
   ]
   if colorscheme = "orange" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
+    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan and pcolor != brown] [
       set pcolor one-of [20 21]
     ]
   ]
   if colorscheme = "black" [
-    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
+    ask patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan and pcolor != brown] [
       set pcolor 0
     ]
   ]
@@ -110,6 +122,12 @@ end
 
 to make-portals
   ask n-of 2 patches with [pcolor != red and pcolor != green and pcolor != gray] [set pcolor cyan]
+end
+
+to makeSlow
+  ask one-of patches with [pcolor != red and pcolor != green and pcolor != gray and pcolor != cyan] [
+    set pcolor brown
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -262,42 +280,36 @@ Game Over
 9.9
 1
 
+MONITOR
+152
+225
+224
+270
+High Score
+L
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+A modified version of the classic arcade game snake.
 
-## HOW IT WORKS
+## NEW FEATURES
 
-(what rules the agents use to create the overall behavior of the model)
+**Portal apples**: these spawn 2 at a time, and are blue. Eating a portal apple will increase your score like a normal apple, and it will also teleport the snake to the other portal apple in the pair.
 
-## HOW TO USE IT
+**Slow Apples**: They don't add to your score but they slow you down. The game speeds up as your score gets higher, so it might be useful.
 
-(how to use the model, including a description of each of the items in the Interface tab)
+**Funky new backgrounds**: whenever the snake eats a portal apple, it changes the background to 1 of 2 new dynamic color schemes.
 
-## THINGS TO NOTICE
+**Leaderboard**: Displays the top score on a computer. If a score you achieved is higher than the top score, it is updated to the new top score.
 
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+## CREDITS AND REFERENCES 
+Creator : Alvin Li
+Testers: Bryan Zhang, Ivan, Jeremy Ku-Benjet
+Instruction: Mr. Peter Brooks
 @#$#@#$#@
 default
 true
