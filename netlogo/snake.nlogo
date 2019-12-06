@@ -25,7 +25,7 @@ to go
     if pcolor = green [
       set score score + 1
       set difficulty difficulty + .07
-      ask one-of patches with [distancexy 0 0 > 5 and abs pxcor != 16 and abs pycor != 16 and pcolor != red] [
+      ask one-of patches with [distancexy 0 0 > 5 and abs pxcor != 16 and abs pycor != 16 and pcolor != red and pcolor != cyan] [
         set pcolor green
       ]
     ]
