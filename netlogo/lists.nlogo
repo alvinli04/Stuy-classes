@@ -30,7 +30,11 @@ end
 
 to-report TheMedian [L]
   set L sort L
-  report (item (floor (length L) / 2) L + item (ceiling (length L) / 2) L / 2)
+  let flr item floor ((length L - 1) / 2) L
+  ;print flr
+  let ceil item ceiling ((length L - 1) / 2) L
+  ;print ceil
+  report (flr + ceil) / 2
 end
 
 ;0123
@@ -405,7 +409,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.1
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
