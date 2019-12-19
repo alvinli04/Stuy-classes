@@ -1,33 +1,39 @@
-to-report isEven? [x]
-  report x mod 2 = 0
+to setup
+  ca
+  crt 200 [
+    set size .5
+    set color red
+    setxy random-xcor random-ycor
+  ]
+  cro 1 [
+    set color blue
+    set size 1.5
+  ]
 end
 
-to-report getEven [L]
-  report filter isEven? L
+to go
+  ask turtles with [color = red] [
+    fd .01
+    rt random 20
+    lt random 20
+  ]
+  ask turtles with [color = blue] [
+    com
+  ]
+  wait .001
 end
 
-to-report Meanness [L]
-  report (reduce + L) / length L
+to com
+  let x mean [xcor] of turtles
+  let y mean [ycor] of turtles
+  setxy x y
 end
-
-to-report TheMedian [L]
-  ;set L sort L
-  ;let flr item floor ((length L - 1) / 2) L
-  ;let ceil item ceiling ((length L - 1) / 2) L
-  ;report (flr + ceil) / 2
-
-  report (item floor ((length L - 1) / 2) sort L + item ceiling ((length L - 1) / 2) sort L) / 2
-end
-
-;0123
-;01234
-;foreach
 @#$#@#$#@
 GRAPHICS-WINDOW
-339
-62
-776
-500
+210
+10
+647
+448
 -1
 -1
 13.0
@@ -49,6 +55,40 @@ GRAPHICS-WINDOW
 1
 ticks
 30.0
+
+BUTTON
+63
+25
+126
+58
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+61
+76
+124
+109
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
