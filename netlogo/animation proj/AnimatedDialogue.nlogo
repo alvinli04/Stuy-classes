@@ -1,44 +1,146 @@
-to-report isEven? [x]
-  report x mod 2 = 0
+globals [
+  lefty
+  lefty-c
+  righty
+  righty-c
+  bottom-curtain
+]
+
+to setup
+  ca
+  title
+  wait 2
+  set lefty-c blue + 3
+  set righty-c yellow + 3
+  cro 1 [
+    set shape "face1"
+    set righty self
+    set size 13
+    setxy 8 0
+    set color righty-c
+  ]
+
+  cro 1 [
+    set shape "face2"
+    set lefty self
+    set size 17
+    setxy -8 -1
+    set color lefty-c
+  ]
+  crt 1 [
+    set shape "rectangle"
+    set color black
+    ht
+    set bottom-curtain self
+  ]
+
 end
 
-to-report getEven [L]
-  report filter isEven? L
+to title
+  ask patch 10 11 [
+    set plabel "...meanwhile, just outside 351 ..."
+    set plabel-color red + 2
+  ]
 end
 
-to-report Meanness [L]
-  report (reduce + L) / length L
+to go
+  say lefty "Yo..." 2.5
+  say righty "Wazzup?" 2.5
+  say lefty "Not much.." 2.5
+  say righty "Say, how d'you do on the quest?" 3
+  say lefty "Mr. Brooks's?" 2
+  say righty "Yeah" 1.5
+  say lefty "Bad..." 1.3
+  say lefty "bad..bad..bad.." 2
+  say righty "What's the answer to #2?" 2
+  say lefty "...." 3
+  say righty "Hmmmmm?" 2
+  say lefty "..can't tell you.." 2.5
+  say righty "Why not?" 2
+  say lefty "...he's coming..." 2
+  say righty "Uh oh, gotta go." 1.5
+  say lefty "...later..." 2
+  say righty "" 1
+  end-lefty
+  wait 1
+  end-righty
+  dats-it
 end
 
-to-report TheMedian [L]
-  ;set L sort L
-  ;let flr item floor ((length L - 1) / 2) L
-  ;let ceil item ceiling ((length L - 1) / 2) L
-  ;report (flr + ceil) / 2
-
-  report (item floor ((length L - 1) / 2) sort L + item ceiling ((length L - 1) / 2) sort L) / 2
+to say [guy what delay]
+  ask patches [set plabel ""]
+  let pos 12
+  let col righty-c
+  if guy = lefty [
+    set pos -4
+    set col lefty-c
+  ]
+  ask patch pos 8 [
+    set plabel what
+    set plabel-color col
+  ]
+  wait delay
 end
 
-;0123
-;01234
-;foreach
+to end-lefty
+  ask bottom-curtain [
+    st
+    set color black
+    set size 30
+    setxy -5 -12
+  ]
+  ask lefty [
+    repeat 50 [
+      set ycor ycor - (-1 - -13) / 50
+      wait 2 / 50
+    ]
+  ]
+
+end
+
+to end-righty
+  ask righty [
+    set color gray
+    repeat 50 [
+      set color color * .95
+      wait 3 / 50
+    ]
+    set color black
+    wait .5
+    repeat 3 [
+    ht
+    wait .2
+    st
+    wait .2
+    ]
+    ht
+  ]
+end
+
+to dats-it
+  ca
+  ask patch 5 0 [
+    set plabel "That's all, Folks!"
+    set plabel-color red
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-339
-62
-776
-500
+210
+10
+647
+448
 -1
 -1
 13.0
 1
-10
+20
 1
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -49,6 +151,40 @@ GRAPHICS-WINDOW
 1
 ticks
 30.0
+
+BUTTON
+62
+73
+125
+106
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+65
+132
+128
+165
+NIL
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -195,6 +331,18 @@ Circle -16777216 true false 60 75 60
 Circle -16777216 true false 180 75 60
 Polygon -16777216 true false 150 168 90 184 62 210 47 232 67 244 90 220 109 205 150 198 192 205 210 220 227 242 251 229 236 206 212 183
 
+face1
+false
+0
+Polygon -7500403 true true 188 64 163 55 134 55 111 65 95 86 95 104 95 111 82 129 70 146 65 153 75 158 99 157 110 153 113 169 115 178 162 173 115 187 117 208 117 224 125 228 162 228 197 214 219 189 219 158 217 104 206 82 199 76
+Polygon -2674135 true false 120 105 120 105 135 105 135 105 135 120 120 120
+
+face2
+true
+0
+Polygon -7500403 true true 100 85 113 68 126 64 160 63 171 70 175 84 182 113 205 153 203 156 189 159 180 152 177 165 160 164 153 159 144 153 145 169 155 173 169 173 182 174 183 183 169 191 143 193 129 186 111 163 94 125 98 103
+Polygon -1184463 true false 171 100 161 97 155 100 160 108 171 109
+
 fish
 false
 0
@@ -278,6 +426,11 @@ Polygon -7500403 true true 165 180 165 210 225 180 255 120 210 135
 Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
+
+rectangle
+false
+0
+Polygon -7500403 true true 15 105 285 105 285 195 15 195
 
 sheep
 false
