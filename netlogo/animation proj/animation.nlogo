@@ -3,16 +3,18 @@ to go
   fr1
   fr2
   fr3
+  fr4
+  fr5
 end
 
 ;utility functions
 
 to glide [x y]
   facexy x y
-  while [abs (x - xcor) > .1 and abs (y - ycor) > .1]
+  while [abs (x - xcor) > .1 or abs (y - ycor) > .1]
   [
     fd .1
-    wait .05
+    wait .02
   ]
 end
 
@@ -31,7 +33,9 @@ to spawn [x y mshape mcolor msize]
     set size msize
     setxy x y
   ]
-end ;optimal lattice: 2 up 2 side from prev
+end
+;optimal lattice: 2 up 2 side from prev
+;circles: blue red, size 2
 
 to triangleDown [x y num]
   if num != 0
@@ -39,6 +43,19 @@ to triangleDown [x y num]
     spawn x y "circle" red 2
     triangleDown (x - 2) (y - 2) (num - 1)
     triangleDown (x + 2) (y - 2) (num - 1)
+  ]
+end
+
+to square [x]
+  if x != 1
+  [
+    ask turtles with [who > 24 - 5 * x]
+    [
+     hatch 1
+      [
+        glide xcor ycor - 2 * sqrt 2
+      ]
+    ]
   ]
 end
 
@@ -69,7 +86,7 @@ to fr2
   wait 3.3
   triangleDown 0 0 4
   wait 1
-  text -19 -10 "This is the 4th triangular number. (See why they're called triangular?)"
+  text -19 -10 "This is 10, the 4th triangular number. (See why they're called triangular?)"
   wait 3
 end
 
@@ -78,13 +95,13 @@ to fr3
   text -19 7 "The sum of the first n natural numbers can be calculated easily with this formula."
   wait 2.5
   spawn -11 -2 "sum" blue 10
-  wait .2
+  wait .5
   spawn -11 -6.5 "k=1" blue 5
-  wait .2
+  wait .5
   spawn -11 2.5 "n" blue 5
-  wait .2
+  wait .5
   spawn -5 -2 "=" blue 7
-  wait .1
+  wait .5
   spawn -.5 1 "n" blue 7
   spawn 3 1 "(" blue 7
   spawn 5 1 "n" blue 7
@@ -93,22 +110,65 @@ to fr3
   spawn 12 1 ")" blue 7
   spawn 5 -2 "-" blue 14
   spawn 5 -5 "2" blue 7
-  ask turtles
-  [
-    wait 1
-    set color 15
-    wait 1
-    set color 25
-    wait 1
-    set color 45
-    wait 1
-    set color 65
-    wait 1
-    set color 95
-  ]
+  wait 1
+  ask turtles [set color 15]
+  wait 1
+  ask turtles [set color 25]
+  wait 1
+  ask turtles [set color 45]
+  wait 1
+  ask turtles [set color 65]
+  wait 1
+  ask turtles [set color 95]
+  wait .5
   text 12 -11 "But why is that?"
   wait 1.5
 end
+
+to fr4
+  ca
+  text -19 12 "Lets take any number and square it."
+  wait 1
+  spawn -4 * sqrt 2 6 "circle" red 2
+  spawn -2 * sqrt 2 6 "circle" red 2
+  spawn 0 6 "circle" red 2
+  spawn 2 * sqrt 2 6 "circle" red 2
+  spawn 4 * sqrt 2 6 "circle" red 2
+  text 0 -11 "n"
+
+  wait .5
+  text 1 -10 "2"
+  wait .75
+  text -19 11 "now add another row."
+  wait 1.1
+  ask turtles
+  [
+    setxy xcor - 2 * sqrt 2 ycor
+  ]
+  wait .3
+  spawn 4 * sqrt 2 6 "circle" red 2
+  ;make extra row
+  wait .2
+  text 3 -11 "+ n"
+  wait 2
+end
+
+to fr5
+  cp
+  ask turtles
+  [
+    ;glide 1 1
+  ]
+end
+
+
+
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 171
@@ -119,7 +179,7 @@ GRAPHICS-WINDOW
 -1
 22.73
 1
-15
+16
 1
 1
 1
@@ -195,6 +255,23 @@ BUTTON
 370
 NIL
 fr3\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1270
+385
+1333
+418
+NIL
+fr4\n
 NIL
 1
 T
