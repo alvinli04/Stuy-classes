@@ -8,6 +8,16 @@ to go
 end
 
 ;utility functions
+to line [x1 y1 x2 y2]
+  cro 1
+  [
+    set hidden? true
+    setxy x1 y1
+    pd
+    glide x2 y2
+    die
+  ]
+end
 
 to glide [x y]
   facexy x y
@@ -53,8 +63,28 @@ to square [x]
     [
      hatch 1
       [
-        glide xcor ycor - 2 * sqrt 2
+        set heading 180
       ]
+    ]
+    repeat 20
+    [
+      ask turtles with [who > 24 - 5 * (x - 1)]
+      [
+        fd .1 * sqrt 2
+        wait .007
+      ]
+    ]
+    square x - 1
+  ]
+end
+
+to rowDown [x]
+  if x != 1
+  [
+    hatch 1
+    [
+      glide xcor ycor - 2 * sqrt 2
+      rowDown x - 1
     ]
   ]
 end
@@ -135,7 +165,8 @@ to fr4
   spawn 2 * sqrt 2 6 "circle" red 2
   spawn 4 * sqrt 2 6 "circle" red 2
   text 0 -11 "n"
-
+  wait .73
+  square 5
   wait .5
   text 1 -10 "2"
   wait .75
@@ -147,20 +178,19 @@ to fr4
   ]
   wait .3
   spawn 4 * sqrt 2 6 "circle" red 2
-  ;make extra row
+  ask turtle 25 [rowDown 5]
   wait .2
   text 3 -11 "+ n"
   wait 2
 end
 
 to fr5
-  cp
-  ask turtles
-  [
-    ;glide 1 1
-  ]
+  text -19 12 ""
+  text -19 11 ""
+  line -9 -7.5 6 7.7
+  let cy ([ycor] of turtle 0 + [ycor] of turtle 29) / 2
+  let cx ([xcor] of turtle 0 + [xcor] of turtle 29) / 2
 end
-
 
 
 
@@ -272,6 +302,23 @@ BUTTON
 418
 NIL
 fr4\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1271
+430
+1334
+463
+NIL
+fr5
 NIL
 1
 T
