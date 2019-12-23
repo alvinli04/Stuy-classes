@@ -190,8 +190,9 @@ to fr5
   line -9 -7.5 6 7.7
   let cy ([ycor] of turtle 0 + [ycor] of turtle 29) / 2
   let cx ([xcor] of turtle 0 + [xcor] of turtle 29) / 2
-end
+  ;turtles under the line rotate
 
+end
 
 
 
