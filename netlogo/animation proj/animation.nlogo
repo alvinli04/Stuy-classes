@@ -267,8 +267,13 @@ to fin
   ca
   wait 0.2
   text 3 0 "Thanks for watching!"
+  end-animation
 end
 
+;end animation
+to end-animation
+
+end
 
 
 
@@ -276,10 +281,10 @@ end
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-540
-31
-1315
-807
+221
+29
+996
+805
 -1
 -1
 23.242424242424246
@@ -303,10 +308,10 @@ ticks
 30.0
 
 BUTTON
-1396
-438
-1459
-471
+1066
+425
+1129
+458
 NIL
 go
 NIL
@@ -321,7 +326,7 @@ NIL
 
 @#$#@#$#@
 ## Netlogo Animation Project
-A visual proof of the formula for the sum of the 1st n numbers. Click go to play. Enjoy!
+A visual proof of the formula for triangular numbers. Click go to play. Enjoy!
 
 ## Credits
 Creator : Alvin Li
