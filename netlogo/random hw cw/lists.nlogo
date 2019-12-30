@@ -11,21 +11,18 @@ to-report Meanness [L]
 end
 
 to-report TheMedian [L]
-<<<<<<< HEAD:netlogo/lists.nlogo
   ;set L sort L
   ;let flr item floor ((length L - 1) / 2) L
   ;let ceil item ceiling ((length L - 1) / 2) L
   ;report (flr + ceil) / 2
 
   report (item floor ((length L - 1) / 2) sort L + item ceiling ((length L - 1) / 2) sort L) / 2
-=======
   set L sort L
   let flr item floor ((length L - 1) / 2) L
   ;print flr
   let ceil item ceiling ((length L - 1) / 2) L
   ;print ceil
   report (flr + ceil) / 2
->>>>>>> 98f5d53b5ca78f65225d193c4a3c7b35c6238e74:netlogo/random hw cw/lists.nlogo
 end
 
 ;0123

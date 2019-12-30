@@ -1,5 +1,7 @@
+patches-own [re im]
 ;main procedure
 to go
+  world
   fr1
   fr2
   fr3
@@ -7,6 +9,11 @@ to go
   fr5
   fr6
   fin
+end
+
+to world
+  resize-world -16 16 -16 16
+  set-patch-size 23.242424242424246
 end
 
 ;utility functions
@@ -31,10 +38,49 @@ to glide [x y]
   ]
 end
 
+to glideAll [L]
+  repeat 20
+  [
+    foreach L
+    [
+      [turt] -> ask turt
+      [
+        setxy xcor - (.1 * sqrt 2) ycor
+      ]
+    ]
+    tick
+    wait .04
+  ]
+end
+
 to text [x y str]
   ask patch x y
   [
+    set plabel-color black
     set plabel str
+    fadeIn x y
+  ]
+end
+
+to fadeOut [x y]
+  ask patch x y
+  [
+    repeat 98
+    [
+      set plabel-color plabel-color - .1
+      wait .01
+    ]
+  ]
+end
+
+to fadeIn [x y]
+  ask patch x y
+  [
+    repeat 99
+    [
+      set plabel-color plabel-color + .1
+      wait .01
+    ]
   ]
 end
 
@@ -74,8 +120,9 @@ to square [x]
       ask turtles with [who > 24 - 5 * (x - 1)]
       [
         fd .1 * sqrt 2
-        wait .007
       ]
+      tick
+      wait .035
     ]
     square x - 1
   ]
@@ -102,6 +149,11 @@ to dRotate [x y L]
     ]
   ]
   wait .025
+  tick
+end
+
+to endSc
+
 end
 
 ;frames
@@ -173,6 +225,7 @@ end
 
 to fr4
   ca
+  reset-ticks
   text -19 12 "Lets take any number and square it."
   wait 1
   spawn -4 * sqrt 2 6 "circle" red 2
@@ -188,10 +241,7 @@ to fr4
   wait 1
   text -19 11 "now add another column."
   wait 1.1
-  ask turtles
-  [
-    setxy xcor - 2 * sqrt 2 ycor
-  ]
+  glideAll (list turtles)
   wait .3
   spawn 4 * sqrt 2 6 "circle" red 2
   ask turtle 25 [rowDown 5]
@@ -201,8 +251,13 @@ to fr4
 end
 
 to fr5
-  text -19 12 ""
-  text -19 11 ""
+  reset-ticks
+  fadeOut -19 12
+  ask patch -19 12 [set plabel-color black]
+  fadeOut -19 11
+  ask patch -19 11 [set plabel-color black]
+  ;text -19 12 ""
+  ;text -19 11 ""
   line -9 -7.5 6 7.7
   wait 1
   let cy ([ycor] of turtle 0 + [ycor] of turtle 29) / 2
@@ -266,28 +321,79 @@ end
 to fin
   ca
   wait 0.2
-  text 3 0 "Thanks for watching!"
   end-animation
 end
 
 ;end animation
 to end-animation
-
+  set-patch-size 1
+  resize-world -383 383 -383 383
+  text 3 0 "Thanks for watching!"
+  let b 1 / 383
+  let L (list patches)
+  foreach L
+  [
+    p -> ask p
+    [
+      set re pxcor * b
+      set im pycor * b
+      let c (list re im)
+      ifelse inM c = -1
+      [
+       set pcolor black
+      ]
+      [
+        set pcolor approximate-hsb (255 * inM c / 100) 255 255
+      ]
+    ]
+  ]
 end
 
+to-report sq [c]
+  let a item 0 c
+  let b item 1 c
+  let newRe a * a - b * b
+  let newIm 2 * a * b
+  report (list newRe newIm)
+end
 
+to-report mag [c]
+  let a item 0 c
+  let b item 1 c
+  report sqrt (a * a + b * b)
+end
 
+to-report add [z w]
+  let a item 0 z
+  let b item 1 z
+  let c item 0 w
+  let d item 1 w
+  report (list (a + c) (b + d))
+end
 
-
+to-report inM [c]
+  let w [0 0]
+  let i 0
+  while [i < 100]
+  [
+    set w add (sq w) c
+    if mag w > 2
+    [
+      report i + 1 - ln (log (mag w) 2)
+    ]
+    set i i + 1
+  ]
+  report -1
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-221
-29
-996
-805
+110
+30
+885
+806
 -1
 -1
-23.242424242424246
+1.0
 1
 16
 1
@@ -297,10 +403,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-383
+383
+-383
+383
 0
 0
 1
@@ -308,10 +414,10 @@ ticks
 30.0
 
 BUTTON
-1066
-425
-1129
-458
+966
+416
+1029
+449
 NIL
 go
 NIL
