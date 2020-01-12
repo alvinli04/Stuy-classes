@@ -1,4 +1,6 @@
-;; dim: 28 x 16
+;; dim: 68 * 40
+;; lane center coords: 12, 6, -1, -8, -15
+extensions [py]
 globals [sunNum difficulty ticker]
 
 breed [lawnmowers lawnmower]
@@ -9,29 +11,54 @@ breed [bullets bullet]
 
 suns-own [state ylim]
 lawnmowers-own [state]
-plants-own [health state cost numbullets] ;;otherwise differentiated by shape
-zombies-own [health state speed damage]
-bullets-own [damage]
+plants-own [health state cost mytick] ;;otherwise differentiated by shape
+zombies-own [health state speed damage] ;;shape differentiation
 
-;;main functions and animations
-to go
+to setup
+  ca
+  set ticker 0
+  set difficulty 1
+  py:setup "python3"
+  (py:run
+    "lane = {1:12, 2:6, 3:-1, 4:-8, 5:-15}"
+    "plants = ['peashooter', 'sunflower', 'wallnut', 'cherry', 'snowpea']"
+    "zombies = ['normal', 'cone', 'sports', 'garg']"
+    "health = {'zombie':200, 'cone': 560, 'sports':500, 'garg':1600}"
+    "speed = {}"
+  )
   startAnimation
   makeMap
+  create-ordered-lawnmowers 5
+  [
+    set shape "lawnmower"
+    set size 7
+    set color gray
+    ask lawnmower 0 [setxy -19.7 12]
+    ask lawnmower 1 [setxy -19.7 6]
+    ask lawnmower 2 [setxy -19.7 -1]
+    ask lawnmower 3 [setxy -19.7 -8]
+    ask lawnmower 4 [setxy -19.7 -15]
+  ]
+end
+;;main functions and animations
+to go
+  ;game functions
   ask lawnMowers [lawnmowerActions]
-  if ticker mod 70 = 0
+  ask plants [plantActions]
+  ask bullets [bulletActions]
+  ask zombies [zombieActions]
+  if ticker mod 280 = 0
   [
     makeSun
   ]
   ask suns
   [
-    while [ycor > ylim]
-    [
-      sunActions
-    ]
+    sunActions
   ]
 
-  set ticker ticker + 1
-  wait .1
+  set ticker (ticker + 1)
+  wait .05 ;;20 fps
+  ;show ticker
 end
 
 to startAnimation
@@ -39,29 +66,31 @@ to startAnimation
 end
 
 to makeMap
-  import-drawing "map.PNG"
+  import-pcolors-rgb "map.PNG"
+  ;;import-drawing "map.PNG"
 end
 
 ;;lawnmowers
-to lawnmowerActions ;;init at the beginning of the game
+to lawnmowerActions
   if count zombies-here > 0 [set state "on"]
   set heading 90
   if state = "on"
   [
-    fd .1
     ask zombies-here
     [
       set health -1
     ]
+    fd .5
   ]
-  if xcor > 28 [die]
+  if xcor > 33 [die]
 end
 
 ;;sun
 to makeSun
   create-ordered-suns 1
   [
-    set ylim random-ycor
+    set size 7
+    set ylim random 37 - 20
     set state "sky"
     set shape "sun"
     setxy random-xcor 16.4
@@ -69,34 +98,56 @@ to makeSun
 end
 
 to sunActions
-  ask suns with [state = "sky"]
+  if state = "sky" and ycor > ylim
   [
-    while [ycor > ylim]
-    [
-      set ycor ycor - .1
-    ]
+    set ycor ycor - .5
+  ]
+  if distancexy mouse-xcor mouse-ycor < 2 and mouse-down?
+  [
+    set sunNum sunNum + 25
+    die
   ]
 end
 
 ;;plants
 to plantActions
-  let myx xcor
-  if count zombies with [xcor = myx] > 0
+  set mytick mytick + 1
+  let myy ycor
+  ifelse count (zombies with [ycor = myy]) > 0
   [
-    shoot numbullets
+    set state "shooting"
+  ]
+  [
+    set state "stop"
+    set mytick 0
+  ]
+
+  if state = "shooting" and (mytick mod 50 = 1)
+  [
+    shoot
   ]
 end
 
-to shoot [n]
-  let myshape shape
-  hatch-bullets n
+to placePlant
+  create-plants 1
   [
+    set shape "peashooter"
+    set size 7
+    setxy -15 py:runresult "lane[1]"
+  ]
+end
+
+to shoot
+  let myshape shape
+  hatch-bullets 1
+  [
+    set size 12
     (ifelse
-      myshape = "default"
+      myshape = "peashooter"
       [
-        set shape "default"
+        set shape "pea"
       ]
-      myshape = "airplane"
+      myshape = "default"
       [
         set shape "airplane"
       ]
@@ -110,21 +161,42 @@ to bulletActions
   [
     ask zombies-here
     [
-      set health health - damage
+      set health health - 20
     ]
     die
   ]
-  set xcor xcor + .1
+  if xcor + .4 >= 34 [die]
+  set xcor xcor + .4
+end
+
+;;zombies
+to makeZombie
+  create-zombies 1
+  [
+    set size 8
+    set shape one-of ["zombie"]
+    py:set "shape" shape
+    set health py:runresult "health[shape]"
+    let lane (random 4) + 1
+    py:set "mylane" lane
+    let laneycor py:runresult "lane[mylane]"
+    setxy 34 laneycor
+  ]
+end
+
+to zombieActions
+  if health <= 0 [die]
+  set xcor xcor - .07 * speed
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-128
-72
-1074
-624
+200
+104
+895
+521
 -1
 -1
-16.46
+10.0
 1
 10
 1
@@ -134,10 +206,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--28
-28
--16
-16
+-34
+34
+-20
+20
 0
 0
 1
@@ -145,10 +217,10 @@ ticks
 30.0
 
 BUTTON
-41
-198
-104
-231
+87
+232
+150
+265
 NIL
 go\n
 T
@@ -160,6 +232,34 @@ NIL
 NIL
 NIL
 1
+
+BUTTON
+88
+189
+151
+222
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+85
+108
+171
+153
+Sun
+sunNum
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -348,6 +448,16 @@ Rectangle -16777216 true false 120 210 180 285
 Polygon -7500403 true true 15 120 150 15 285 120
 Line -16777216 false 30 120 270 120
 
+lawnmower
+false
+0
+Circle -16777216 true false 70 184 45
+Circle -16777216 true false 185 185 44
+Polygon -2674135 true false 113 209 186 211 186 195 197 187 208 188 211 164 195 155 186 144 148 139 135 156 102 155 94 184 108 189 113 193 116 206
+Polygon -7500403 true true 121 155 137 161 146 161 160 155 169 153 171 166 170 178 158 180 136 182 117 178 112 172 112 160 120 155
+Polygon -16777216 true false 107 155 113 146 122 146 128 150 130 154 123 154 112 153
+Polygon -16777216 true false 105 154 59 71 27 104 94 180 98 173 41 106 60 84 101 157
+
 leaf
 false
 0
@@ -363,6 +473,25 @@ line half
 true
 0
 Line -7500403 true 150 0 150 150
+
+pea
+true
+0
+Circle -13840069 true false 135 135 30
+
+peashooter
+false
+0
+Rectangle -10899396 true false 144 177 157 249
+Polygon -10899396 true false 134 240 123 219 108 223 98 234 96 240 108 246 130 245
+Circle -13840069 true false 99 93 94
+Polygon -13840069 true false 185 125 191 124 200 120 209 115 217 115 223 129 226 139 226 153 223 163 220 175 213 182 209 186 200 184 195 180 182 183 173 183 166 183 169 174 177 146
+Polygon -16777216 true false 213 122 218 130 221 145 217 158 216 172 210 177 207 178 202 162 205 145 209 132
+Circle -16777216 true false 150 127 12
+Circle -16777216 true false 171 115 8
+Polygon -13840069 true false 148 252 159 245 178 236 198 236 212 245 222 258 216 259 199 260 192 267 184 274 173 277 164 275 152 263 148 256 143 246 151 246 157 246
+Polygon -13840069 true false 150 247 154 258 152 273 140 282 122 283 110 273 96 266 83 267 77 271 76 261 84 249 102 242 116 237 134 236 142 242
+Polygon -10899396 true false 98 134 83 129 77 142 81 151 89 142
 
 pentagon
 false
@@ -509,6 +638,35 @@ false
 0
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
+
+zombie
+false
+7
+Polygon -7500403 true false 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
+Polygon -7500403 true false 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
+Polygon -7500403 true false 182 213 184 228 205 245 212 246 191 227 189 211
+Polygon -13345367 true false 185 188 195 215 177 219 167 188 181 182
+Polygon -13345367 true false 156 202 163 218 141 250 112 249 137 217 132 205 152 176
+Polygon -6459832 true false 129 144 112 160 104 170 110 185 132 165
+Rectangle -1 true false 120 91 124 97
+Rectangle -1 true false 135 87 140 93
+Polygon -7500403 true false 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
+Circle -1 true false 146 61 21
+Circle -1 true false 105 64 18
+Circle -16777216 true false 127 74 6
+Circle -16777216 true false 138 76 3
+Rectangle -1 true false 131 92 135 96
+Rectangle -1 true false 122 100 125 105
+Circle -16777216 true false 152 68 6
+Circle -16777216 true false 111 71 4
+Polygon -6459832 true false 169 97 172 108 176 120 181 142 185 156 187 174 187 187 174 193 166 199 150 204 147 206 145 198 145 178 143 163 144 146 144 133 144 124 144 116 151 109 154 101 164 100
+Polygon -1 true false 143 117 128 117 125 125 130 144 128 166 128 184 132 185 139 177 146 175
+Polygon -6459832 true false 159 121 156 148 150 176 149 169 129 183 116 198 129 212 139 198 148 192 162 183 161 162 167 141
+Line -16777216 false 145 172 158 126
+Line -16777216 false 172 134 159 181
+Line -16777216 false 159 182 143 194
+Polygon -6459832 true false 117 250 117 263 125 267 141 268 147 263 151 255 142 249 138 249
+Polygon -6459832 true false 208 246 192 247 185 257 186 261 203 261 217 256 214 248 208 243 205 244
 @#$#@#$#@
 NetLogo 6.1.1
 @#$#@#$#@

@@ -2,6 +2,7 @@ patches-own [re im]
 ;main procedure
 to go
   world
+  reset-ticks
   fr1
   fr2
   fr3
@@ -326,8 +327,10 @@ end
 
 ;end animation
 to end-animation
+  reset-ticks
   set-patch-size 1
   resize-world -383 383 -383 383
+  tick
   text 3 0 "Thanks for watching!"
   let b 1 / 383
   let L (list patches)
@@ -393,7 +396,7 @@ GRAPHICS-WINDOW
 806
 -1
 -1
-1.0
+23.242424242424246
 1
 16
 1
@@ -403,10 +406,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--383
-383
--383
-383
+-16
+16
+-16
+16
 0
 0
 1
