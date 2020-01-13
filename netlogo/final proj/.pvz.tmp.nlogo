@@ -266,7 +266,7 @@ to bulletActions
     ]
     if shape = "snowbullet"
     [
-      ask zombies-here with [state != "attacking"]
+      ask zombies-here
       [
         set state "frozen"
       ]
