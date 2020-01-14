@@ -2,7 +2,7 @@
 ;; lane center coords: 12, 6, -1, -8, -15
 ;; column centers: -15 -10 -5 0 5 10 15 20 25
 extensions [py]
-globals [sunNum difficulty ticker occupied shovel?]
+globals [sunNum difficulty ticker occupied shovel? levelpicked]
 
 breed [bullets bullet]
 breed [plants plant]
@@ -18,7 +18,6 @@ zombies-own [health state speed mytick damage] ;;shape differentiation
 to setup
   ca
   set ticker 0
-  ;;set difficulty 1
   set sunNum 25
   set occupied false
   set shovel? false
@@ -34,7 +33,6 @@ to setup
     "damage = {'zombie':100, 'cone': 100, 'sports':150, 'garg':500}"
     "speed = {'zombie':1, 'cone': 1, 'sports':1.75, 'garg':.4}"
   )
-  startAnimation
   makeMap
   create-ordered-lawnmowers 5
   [
@@ -58,7 +56,7 @@ to go
   ask zombies [zombieActions]
   if ticker mod 300 = 0
   [
-    makeZombie random 5 + 1 one-of ["zombie" "cone" "sports" "garg"]
+    ;makeZombie random 5 + 1 one-of ["zombie" "cone" "sports" "garg"]
   ]
   if ticker mod 200 = 0
   [
@@ -78,8 +76,30 @@ to go
   ]
 end
 
-to startAnimation
-
+to startScreen
+  ask patch 8 0
+  [
+    set plabel-color black
+    set plabel "Plants vs. Zombies 3"
+    repeat 99
+    [
+      set plabel-color plabel-color + .1
+      wait .01
+    ]
+  ]
+  create-plants 1
+  [
+    setxy -21 5
+    set shape "peashooter"
+    set size 20
+  ]
+  create-zombies 1
+  [
+    setxy 21 5
+    set shape "zombie"
+    set size 15
+  ]
+  if not levelpicked [wait 1]
 end
 
 to loseAnimation
@@ -87,7 +107,6 @@ to loseAnimation
 end
 
 to makeMap
-  ;;import-pcolors-rgb "map.PNG"
   import-drawing "map.PNG"
 end
 
@@ -326,13 +345,14 @@ end
 
 to attack
   let mydamage damage
-  if count plants-here = 0
+  if count [plants-at -2 0] of patch round xcor round ycor = 0
   [
+    print round xcor - 2
     set state "mobile"
   ]
   if state = "attacking"
   [
-    ask plants-here
+    ask [plants-at -2 0] of patch round xcor round ycor
     [
       set health health - mydamage
     ]
@@ -348,7 +368,7 @@ GRAPHICS-WINDOW
 -1
 10.0
 1
-10
+20
 1
 1
 1
