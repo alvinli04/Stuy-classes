@@ -2,7 +2,7 @@
 ;; lane center coords: 12, 6, -1, -8, -15
 ;; column centers: -15 -10 -5 0 5 10 15 20 25
 extensions [py]
-globals [sunNum difficulty ticker occupied shovel? levelpicked]
+globals [sunNum difficulty ticker occupied shovel? levelpicked gameEnd won? noMore]
 
 breed [bullets bullet]
 breed [plants plant]
@@ -16,11 +16,15 @@ plants-own [health state cost mytick suntick] ;;otherwise differentiated by shap
 zombies-own [health state speed mytick damage] ;;shape differentiation
 
 to setup
-  ca
+  cp
+  ct
   set ticker 0
   set sunNum 25
   set occupied false
   set shovel? false
+  set gameEnd false
+  set won? false
+  set noMore false
   py:setup py:python
   (py:run
     "lane = {1:12, 2:6, 3:-1, 4:-8, 5:-15}"
@@ -50,14 +54,11 @@ end
 ;;main functions and animations
 to go
   ;game functions
+  waves
   ask lawnMowers [lawnmowerActions]
   ask plants [plantActions]
   ask bullets [bulletActions]
   ask zombies [zombieActions]
-  if ticker mod 300 = 0
-  [
-    ;makeZombie random 5 + 1 one-of ["zombie" "cone" "sports" "garg"]
-  ]
   if ticker mod 200 = 0
   [
     makeSun
@@ -72,11 +73,23 @@ to go
   if count (zombies with [xcor < -23]) > 0
   [
     loseAnimation
-    stop
+    set gameEnd true
+    set won? false
   ]
+  if noMore and count zombies = 0
+  [
+    winAnimation
+    set gameEnd true
+    set won? true
+  ]
+  ;load
 end
 
-to startScreen
+to load
+  ca
+  set levelpicked false
+  set gameEnd false
+  set levelpicked false
   ask patch 8 0
   [
     set plabel-color black
@@ -99,11 +112,71 @@ to startScreen
     set shape "zombie"
     set size 15
   ]
-  if not levelpicked [wait 1]
+  wait 1
+  ask patch 8 -6
+  [
+    set plabel "select difficulty (click):"
+  ]
+  ask patch -8 -13
+  [
+    set plabel "easy"
+  ]
+  ask patch 8 -13
+  [
+    set plabel "hard"
+  ]
+  while [not levelpicked]
+  [
+    ;print "running"
+    ask patch -9 -13
+    [
+      ;print distancexy mouse-xcor mouse-ycor
+      if distancexy mouse-xcor mouse-ycor <= 1.5 ;and mouse-down?
+      [
+        ;print "hi"
+        set difficulty "easy"
+        set levelpicked true
+      ]
+    ]
+
+    ask patch 6 -13
+    [
+      if distancexy mouse-xcor mouse-ycor <= 1.5 and mouse-down?
+      [
+        set difficulty "hard"
+        set levelpicked true
+      ]
+    ]
+  ]
+  setup
 end
 
+;;win and lose screens
 to loseAnimation
+  ca
+  cro 1
+  [
+    set size 17
+    set shape "dead"
+    setxy 10 -10
+  ]
+  ask patch 11 4
+  [
+    set plabel "THE ZOMBIES ATE YOUR BRAINS!!!!"
+    set plabel-color red
+  ]
+  wait 5
+  load
+end
 
+to winAnimation
+  ca
+  ask patch 11 4
+  [
+    set plabel "You survived, for now..."
+  ]
+  wait 5
+  load
 end
 
 to makeMap
@@ -298,25 +371,28 @@ to bulletActions
 end
 
 ;;zombies
-to makeZombie [lane myshape]
-  create-zombies 1
+to makeZombie [lane myshape time]
+  if ticker = time * 20
   [
-    set shape myshape
-    set state "mobile"
-    ifelse shape != "garg"
+    create-zombies 1
     [
-      set size 9
+      set shape myshape
+      set state "mobile"
+      ifelse shape != "garg"
+      [
+        set size 9
+      ]
+      [
+        set size 13
+      ]
+      py:set "shape" myshape
+      set health py:runresult "health[shape]"
+      set damage py:runresult "damage[shape]"
+      set speed py:runresult "speed[shape]"
+      py:set "mylane" lane
+      let laneycor py:runresult "lane[mylane]"
+      setxy 34 laneycor
     ]
-    [
-      set size 13
-    ]
-    py:set "shape" myshape
-    set health py:runresult "health[shape]"
-    set damage py:runresult "damage[shape]"
-    set speed py:runresult "speed[shape]"
-    py:set "mylane" lane
-    let laneycor py:runresult "lane[mylane]"
-    setxy 34 laneycor
   ]
 end
 
@@ -347,7 +423,7 @@ to attack
   let mydamage damage
   if count [plants-at -2 0] of patch round xcor round ycor = 0
   [
-    print round xcor - 2
+    ;print round xcor - 2
     set state "mobile"
   ]
   if state = "attacking"
@@ -355,6 +431,63 @@ to attack
     ask [plants-at -2 0] of patch round xcor round ycor
     [
       set health health - mydamage
+    ]
+  ]
+end
+
+;;writing the waves of zombies
+to waves
+  ;makeZombie lane shape time
+  ;20 fps
+  if difficulty = "easy"
+  [
+    makeZombie 2 "zombie" 25
+    makeZombie 1 "zombie" 45
+    makeZombie 3 "zombie" 60
+    makeZombie 3 "cone" 70
+    makeZombie 5 "cone" 75
+    makeZombie 2 "sports" 90
+    makeZombie 1 "zombie" 105
+    makeZombie 3 "sports" 107
+    makeZombie 5 "cone" 120
+    bigWaveMessage 126
+    makeZombie 1 "zombie" 135
+    makeZombie 1 "cone" 135
+    makeZombie 1 "zombie" 137
+    makeZombie 2 "zombie" 135
+    makeZombie 2 "sports" 137
+    makeZombie 3 "garg" 136
+    makeZombie 4 "zombie" 135
+    makeZombie 4 "sports" 137
+    makeZombie 5 "sports" 135
+    makeZombie 5 "cone" 137
+    makeZombie 5 "zombie" 137
+    if ticker > 150 * 20 [set noMore true]
+  ]
+  if difficulty = "hard"
+  [
+    bigWaveMessage 10
+    makezombie 2 "zombie" 20
+    if ticker > 20 * 20 [set noMore true]
+  ]
+end
+
+to bigWaveMessage [time]
+  if ticker = time * 20
+  [
+    cro 1
+    [
+      setxy 16 0
+      set size .0001
+      set label-color red
+      set label "A BIG WAVE OF ZOMBIES IS APPROACHING!!"
+    ]
+  ]
+  if ticker = time * 20 + 60
+  [
+    ask turtles with [size = .0001]
+    [
+      die
     ]
   ]
 end
@@ -386,40 +519,6 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-BUTTON
-95
-142
-158
-175
-NIL
-go\n
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-96
-99
-159
-132
-NIL
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 MONITOR
 91
 35
@@ -449,10 +548,10 @@ NIL
 1
 
 BUTTON
-405
-555
-539
-588
+48
+538
+182
+571
 get 10000 sun
 set sunNum 10000\n
 NIL
@@ -488,7 +587,7 @@ BUTTON
 766
 492
 wall-nut: 50 sun
-if sunNum < 50 [stop]\nplacePlant \"wallnut\"\nset sunNum sunNum - 50
+if levelpicked [\nif sunNum < 50 [stop]\nplacePlant \"wallnut\"\nset sunNum sunNum - 50\n]
 NIL
 1
 T
@@ -517,12 +616,12 @@ NIL
 1
 
 BUTTON
-897
-37
-964
-70
+107
+94
+174
+127
 shovel
-set shovel? true\nplacePlant \"shovel\"
+if levelpicked [\n    set shovel? true\n    placePlant \"shovel\"\n]
 NIL
 1
 T
@@ -531,6 +630,70 @@ NIL
 NIL
 NIL
 NIL
+1
+
+BUTTON
+87
+229
+175
+262
+load game
+load
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+86
+273
+179
+306
+play/pause
+go\n
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+52
+324
+202
+366
+Click load game, pick the difficulty, and press play to run.
+11
+0.0
+1
+
+TEXTBOX
+56
+138
+206
+156
+Gets rid of plants for free!\n
+11
+0.0
+1
+
+TEXTBOX
+377
+501
+647
+581
+Plants and their respective sun costs. To place a plant, click a button and drag it to where you want it to be placed. Click again to place.\n
+13
+0.0
 1
 
 @#$#@#$#@
@@ -611,6 +774,19 @@ Line -16777216 false 185 160 169 94
 Line -16777216 false 146 171 144 114
 Line -16777216 false 128 145 103 167
 Line -16777216 false 126 168 109 185
+
+dead
+false
+0
+Circle -10899396 true false 63 63 175
+Line -16777216 false 112 120 137 145
+Line -16777216 false 137 116 110 149
+Line -16777216 false 174 118 206 143
+Line -16777216 false 202 111 177 149
+Line -16777216 false 98 189 113 179
+Line -16777216 false 113 180 143 176
+Line -16777216 false 144 176 180 182
+Line -16777216 false 181 183 192 191
 
 garg
 false
