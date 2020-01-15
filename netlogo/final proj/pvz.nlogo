@@ -30,8 +30,8 @@ to setup
     "lane = {1:12, 2:6, 3:-1, 4:-8, 5:-15}"
     "lanes = [12, 6, -1, -8, -15]"
     "columns = [-15, -10, -4, 1, 7, 13, 18, 23, 29]"
-    "plants = ['peashooter', 'sunflower', 'wallnut', 'cherry', 'snowpea']"
-    "plantHealth = {'peashooter':300, 'sunflower':300, 'wallnut':4000, 'snowpea':300}"
+    "plants = ['peashooter', 'sunflower', 'wallnut', 'cherry', 'snowpea', 'mine']"
+    "plantHealth = {'peashooter':300, 'sunflower':300, 'wallnut':4000, 'snowpea':300, 'mine':1000}"
     "zombies = ['normal', 'cone', 'sports', 'garg']"
     "health = {'zombie':200, 'cone': 560, 'sports':300, 'garg':3000}"
     "damage = {'zombie':100, 'cone': 100, 'sports':150, 'garg':500}"
@@ -246,7 +246,21 @@ to plantActions
     shoot
   ]
   sunFlower
-
+  if shape = "mine"
+  [
+    if count zombies-here > 0
+    [
+      ask zombies with [shape != "garg"]
+      [
+        die
+      ]
+      ask zombies with [shape = "garg"]
+      [
+        set health health - 1500
+      ]
+      die
+    ]
+  ]
   ;;drag and drop function
   if state = "persuit"
   [
@@ -442,27 +456,29 @@ to waves
   if difficulty = "easy"
   [
     makeZombie 2 "zombie" 25
-    makeZombie 1 "zombie" 45
-    makeZombie 3 "zombie" 60
-    makeZombie 3 "cone" 70
+    makeZombie 1 "zombie" 55
+    makeZombie 3 "zombie" 75
+    makeZombie 3 "cone" 90
     makeZombie 5 "cone" 75
-    makeZombie 2 "sports" 90
-    makeZombie 1 "zombie" 105
-    makeZombie 3 "sports" 107
-    makeZombie 5 "cone" 120
-    bigWaveMessage 126
-    makeZombie 1 "zombie" 135
-    makeZombie 1 "cone" 135
-    makeZombie 1 "zombie" 137
-    makeZombie 2 "zombie" 135
-    makeZombie 2 "sports" 137
-    makeZombie 3 "garg" 136
-    makeZombie 4 "zombie" 135
-    makeZombie 4 "sports" 137
-    makeZombie 5 "sports" 135
-    makeZombie 5 "cone" 137
-    makeZombie 5 "zombie" 137
-    if ticker > 150 * 20 [set noMore true]
+    makeZombie 2 "sports" 120
+    makeZombie 1 "zombie" 120
+    makeZombie 3 "sports" 150
+    makeZombie 5 "cone" 160
+    makeZombie 2 "zombie" 160
+    makeZombie 3 "zombie" 160
+    bigWaveMessage 170
+    makeZombie 1 "zombie" 185
+    makeZombie 1 "cone" 185
+    makeZombie 1 "zombie" 187
+    makeZombie 2 "zombie" 185
+    makeZombie 2 "sports" 187
+    makeZombie 3 "garg" 186
+    makeZombie 4 "zombie" 185
+    makeZombie 4 "sports" 187
+    makeZombie 5 "sports" 185
+    makeZombie 5 "cone" 187
+    makeZombie 5 "zombie" 187
+    if ticker > 210 * 20 [set noMore true]
   ]
   if difficulty = "hard"
   [
@@ -548,10 +564,10 @@ NIL
 1
 
 BUTTON
-48
-538
-182
-571
+22
+517
+156
+550
 get 10000 sun
 set sunNum 10000\n
 NIL
@@ -587,7 +603,7 @@ BUTTON
 766
 492
 wall-nut: 50 sun
-if levelpicked [\nif sunNum < 50 [stop]\nplacePlant \"wallnut\"\nset sunNum sunNum - 50\n]
+if sunNum < 50 [stop]\nplacePlant \"wallnut\"\nset sunNum sunNum - 50
 NIL
 1
 T
@@ -687,13 +703,30 @@ Gets rid of plants for free!\n
 1
 
 TEXTBOX
-377
-501
-647
-581
+431
+554
+701
+634
 Plants and their respective sun costs. To place a plant, click a button and drag it to where you want it to be placed. Click again to place.\n
 13
 0.0
+1
+
+BUTTON
+774
+459
+916
+492
+potato mine: 25 sun
+if sunNum < 25 [stop]\nplacePlant \"mine\"\nset sunNum sunNum - 25\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
 1
 
 @#$#@#$#@
@@ -829,6 +862,11 @@ Polygon -2674135 true false 113 209 186 211 186 195 197 187 208 188 211 164 195 
 Polygon -7500403 true true 121 155 137 161 146 161 160 155 169 153 171 166 170 178 158 180 136 182 117 178 112 172 112 160 120 155
 Polygon -16777216 true false 107 155 113 146 122 146 128 150 130 154 123 154 112 153
 Polygon -16777216 true false 105 154 59 71 27 104 94 180 98 173 41 106 60 84 101 157
+
+mine
+true
+0
+Polygon -7500403 true true 150 5 40 250 150 205 260 250
 
 pea
 true
