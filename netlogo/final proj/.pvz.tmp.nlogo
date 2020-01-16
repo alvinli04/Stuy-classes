@@ -714,10 +714,10 @@ Gets rid of plants for free!\n
 1
 
 TEXTBOX
-431
-554
-701
-634
+320
+567
+590
+647
 Plants and their respective sun costs. To place a plant, click a button and drag it to where you want it to be placed. Click again to place.\n
 13
 0.0
