@@ -2,7 +2,7 @@
 ;; lane center coords: 12, 6, -1, -8, -15
 ;; column centers: -15 -10 -5 0 5 10 15 20 25
 extensions [py]
-globals [sunNum difficulty ticker occupied shovel? levelpicked gameEnd won? noMore t1 t2 t3 t4 t5]
+globals [sunNum difficulty ticker occupied shovel? levelpicked gameEnd won? noMore t1 t2 t3 t4 t5 lastcost lastpressed]
 
 breed [bullets bullet]
 breed [plants plant]
@@ -421,6 +421,28 @@ to makeZombie [lane myshape time]
   ]
 end
 
+to makeZombieTest [lane myshape]
+    create-zombies 1
+    [
+      set shape myshape
+      set state "mobile"
+      ifelse shape != "garg"
+      [
+        set size 9
+      ]
+      [
+        set size 13
+      ]
+      py:set "shape" myshape
+      set health py:runresult "health[shape]"
+      set damage py:runresult "damage[shape]"
+      set speed py:runresult "speed[shape]"
+      py:set "mylane" lane
+      let laneycor py:runresult "lane[mylane]"
+      setxy 34 laneycor
+  ]
+end
+
 to zombieActions
   if health <= 0 [die]
   if state = "mobile"
@@ -441,12 +463,20 @@ to zombieActions
     set state "attacking"
     attack
   ]
+  if shape = "sports"
+  [
+    if mytick mod 10 = 0
+    [
+      set state "attacking"
+      attack
+    ]
+  ]
   set mytick mytick + 1
 end
 
 to attack
   let mydamage damage
-  if count [plants-at -2 0] of patch round xcor round ycor = 0
+  if count [plants-at -2 0] of patch round xcor round ycor = 0 or [shape] of one-of [plants-at -2 0] of patch round xcor round ycor = "mine"
   [
     ;print round xcor - 2
     set state "mobile"
@@ -478,21 +508,18 @@ to waves
     makeZombie 2 "zombie" 160
     makeZombie 3 "zombie" 160
     bigWaveMessage 170
-    makeZombie 1 "zombie" 185
     makeZombie 1 "cone" 185
-    makeZombie 1 "zombie" 187
     makeZombie 2 "zombie" 185
     makeZombie 2 "sports" 187
     makeZombie 3 "garg" 186
-    makeZombie 4 "zombie" 185
     makeZombie 4 "sports" 187
-    makeZombie 5 "sports" 185
     makeZombie 5 "cone" 187
     makeZombie 5 "zombie" 187
-    if ticker > 210 * 20 [set noMore true]
+    if ticker > 200 * 20 [set noMore true]
   ]
   if difficulty = "hard"
   [
+
     bigWaveMessage 10
     makezombie 2 "zombie" 20
     if ticker > 20 * 20 [set noMore true]
@@ -563,7 +590,7 @@ BUTTON
 636
 492
 snow pea: 175 sun
-if sunNum < 175 [stop]\nif ticker < t3 + 100 [stop]\nset t3 ticker\nplacePlant \"snowpea\"\nset sunNum sunNum - 175
+if sunNum < 175 [stop]\nif ticker < t3 + 100 [stop]\nset t3 ticker\nset lastcost 175\nplacePlant \"snowpea\"\nset sunNum sunNum - 175\nset lastpressed \"snowpea\"
 NIL
 1
 T
@@ -575,10 +602,10 @@ NIL
 1
 
 BUTTON
-22
-517
-156
-550
+973
+58
+1107
+91
 get 10000 sun
 set sunNum 10000\n
 NIL
@@ -597,7 +624,7 @@ BUTTON
 482
 493
 peashooter: 100 sun
-if sunNum < 100 [stop]\nif ticker < t2 + 100 [stop]\nset t2 ticker\nplacePlant \"peashooter\"\nset sunNum sunNum - 100
+if sunNum < 100 [stop]\nif ticker < t2 + 100 [stop]\nset t2 ticker\nset lastcost 100\nplacePlant \"peashooter\"\nset sunNum sunNum - 100\nset lastpressed \"peashooter\"
 NIL
 1
 T
@@ -614,7 +641,7 @@ BUTTON
 766
 492
 wall-nut: 50 sun
-if sunNum < 50 [stop]\nif ticker < t4 + 400 [stop]\nset t4 ticker\nplacePlant \"wallnut\"\nset sunNum sunNum - 50
+if sunNum < 50 [stop]\nif ticker < t4 + 400 [stop]\nset t4 ticker\nset lastcost 50\nplacePlant \"wallnut\"\nset sunNum sunNum - 50\nset lastpressed \"wallnut\"
 NIL
 1
 T
@@ -631,7 +658,7 @@ BUTTON
 320
 493
 sunflower: 50 sun
-if sunNum < 50 [stop]\nif ticker < t2 + 100 [stop]\nset t2 ticker\nplacePlant \"sunflower\"\nset sunNum sunNum - 50
+if sunNum < 50 [stop]\nif ticker < t2 + 100 [stop]\nset t2 ticker\nset lastcost 50\nplacePlant \"sunflower\"\nset sunNum sunNum - 50\nset lastpressed \"sunflower\"
 NIL
 1
 T
@@ -714,11 +741,11 @@ Gets rid of plants for free!\n
 1
 
 TEXTBOX
-431
-554
-701
-634
-Plants and their respective sun costs. To place a plant, click a button and drag it to where you want it to be placed. Click again to place.\n
+331
+565
+746
+645
+Plants and their respective sun costs. To place a plant, click a button and drag it to where you want it to be placed. Click again to place. The cooldown counter must be 0 before the plant can be placed again.\n
 13
 0.0
 1
@@ -729,7 +756,7 @@ BUTTON
 916
 492
 potato mine: 25 sun
-if sunNum < 25 [stop]\nif ticker < t5 + 340 [stop]\nset t5 ticker\nplacePlant \"mine\"\nset sunNum sunNum - 25\n
+if sunNum < 25 [stop]\nif ticker < t5 + 340 [stop]\nset t5 ticker\nset lastcost 25\nplacePlant \"mine\"\nset sunNum sunNum - 25\nset lastpressed \"mine\"\n
 NIL
 1
 T
@@ -794,6 +821,33 @@ cooldown t4 20
 0
 1
 11
+
+BUTTON
+941
+459
+1007
+492
+cancel
+if count plants with [state = \"persuit\"] = 0 [stop]\nask plants with [state = \"persuit\"] [die]\nset sunNum sunNum + lastcost\n(ifelse\nlastpressed = \"mine\"\n[set t5 -1000]\nlastpressed = \"wallnut\"\n[set t4 -1000]\nlastpressed = \"snowpea\"\n[set t3 -1000]\nlastpressed = \"peashooter\"\n[set t2 -1000]\nlastpressed = \"sunflower\"\n[set t1 -1000]\n)\nset occupied false
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+945
+505
+1095
+533
+to cancel your plant selection, click cancel.
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -938,6 +992,8 @@ pea
 true
 0
 Circle -13840069 true false 135 135 30
+Circle -16777216 false false 135 135 30
+Circle -16777216 false false 150 150 0
 
 peashooter
 false
