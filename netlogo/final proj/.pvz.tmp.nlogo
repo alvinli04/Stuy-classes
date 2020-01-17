@@ -660,7 +660,7 @@ BUTTON
 320
 493
 sunflower: 50 sun
-if sunNum < 50 [stop]\nif ticker < t1 + 100 [stop]\nset t1 ticker\nset lastcost 50\nplacePlant \"sunflower\"\nset sunNum sunNum - 50\nset lastpressed \"sunflower\"
+if sunNum < 50 [stop]\nif ticker < t2 + 100 [stop]\nset t2 ticker\nset lastcost 50\nplacePlant \"sunflower\"\nset sunNum sunNum - 50\nset lastpressed \"sunflower\"
 NIL
 1
 T
@@ -787,7 +787,7 @@ MONITOR
 546
 cooldown
 cooldown t1 5
-0
+1
 1
 11
 
