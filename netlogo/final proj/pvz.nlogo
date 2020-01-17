@@ -2,10 +2,10 @@
 ;; lane center coords: 12, 6, -1, -8, -15
 ;; column centers: -15 -10 -5 0 5 10 15 20 25
 extensions [py]
-globals [sunNum difficulty ticker occupied shovel? levelpicked gameEnd won? noMore t1 t2 t3 t4 t5 lastcost lastpressed placed]
+globals [sunNum difficulty ticker occupied shovel? levelpicked gameEnd won? noMore t1 t2 t3 t4 t5 lastcost lastpressed placed minedown]
 
-breed [bullets bullet]
 breed [plants plant]
+breed [bullets bullet]
 breed [zombies zombie]
 breed [lawnmowers lawnmower]
 breed [suns sun]
@@ -31,7 +31,7 @@ to setup
     "lanes = [12, 6, -1, -8, -15]"
     "columns = [-15, -10, -4, 1, 7, 13, 18, 23, 29]"
     "plants = ['peashooter', 'sunflower', 'wallnut', 'cherry', 'snowpea', 'mine']"
-    "plantHealth = {'peashooter':300, 'sunflower':300, 'wallnut':4000, 'snowpea':300, 'mine':1000}"
+    "plantHealth = {'peashooter':300, 'sunflower':300, 'wallnut':4000, 'snowpea':300, 'mine':300}"
     "zombies = ['normal', 'cone', 'sports', 'garg']"
     "health = {'zombie':200, 'cone': 560, 'sports':300, 'garg':3000}"
     "damage = {'zombie':100, 'cone': 100, 'sports':150, 'garg':500}"
@@ -113,6 +113,7 @@ to load
   ]
   create-zombies 1
   [
+    set color gray
     setxy 21 5
     set shape "zombie"
     set size 15
@@ -226,7 +227,7 @@ to sunActions
   [
     set ycor ycor - .2
   ]
-  if distancexy mouse-xcor mouse-ycor < 2 and mouse-down?
+  if distancexy mouse-xcor mouse-ycor < 2.5 and mouse-down?
   [
     set sunNum sunNum + 25
     die
@@ -257,20 +258,23 @@ to plantActions
     shoot
   ]
   sunFlower
-  if shape = "mine" and placed
+  if shape = "mine" and placed and not minedown
   [
     if count zombies-here > 0
     [
-      ask zombies-here with [shape != "garg"]
-      [
-        die
-      ]
-      ask zombies-here with [shape = "garg"]
-      [
-        set health health - 1500
-      ]
-      die
+      ask zombies-here [set health health - 1500]
+      set shape "explode"
+      set suntick 0
     ]
+  ]
+  if shape = "minedown" and suntick > 210
+  [
+    set minedown false
+    set shape "mine"
+  ]
+  if shape = "explode" and suntick = 15
+  [
+    die
   ]
   ;;drag and drop function
   if state = "persuit"
@@ -310,8 +314,14 @@ to plantActions
         ask plants-here [die]
       ]
       set placed true
+      if shape = "mine"
+      [
+        set minedown true
+        set shape "minedown"
+      ]
     ]
   ]
+  set mytick mytick + 1
 end
 
 to placePlant [myPlant]
@@ -426,6 +436,7 @@ end
 to makeZombieTest [lane myshape]
     create-zombies 1
     [
+      set color gray
       set shape myshape
       set state "mobile"
       ifelse shape != "garg"
@@ -450,13 +461,15 @@ to zombieActions
   if state = "mobile"
   [
     set xcor xcor - 0.04 * speed
+    set color gray
   ]
   if state = "frozen"
   [
     set xcor xcor - 0.013 * speed
+    set color blue
     set mytick 0
   ]
-  if mytick = 60
+  if mytick = 180
   [
     set state "mobile"
   ]
@@ -640,23 +653,6 @@ NIL
 1
 
 BUTTON
-973
-58
-1107
-91
-get 10000 sun
-set sunNum 10000\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
 335
 460
 482
@@ -794,7 +790,7 @@ BUTTON
 916
 492
 potato mine: 25 sun
-if sunNum < 25 [stop]\nif ticker < t5 + 340 [stop]\nset t5 ticker\nset lastcost 25\nplacePlant \"mine\"\nset sunNum sunNum - 25\nset lastpressed \"mine\"\n
+if sunNum < 25 [stop]\nif ticker < t5 + 340 [stop]\nset t5 ticker\nset lastcost 25\nplacePlant \"mine\"\nask plants with [state = \"persuit\"]\n[set placed false]\nset sunNum sunNum - 25\nset lastpressed \"mine\"\n
 NIL
 1
 T
@@ -880,7 +876,7 @@ NIL
 TEXTBOX
 945
 505
-1095
+1062
 533
 to cancel your plant selection, click cancel.
 11
@@ -889,40 +885,23 @@ to cancel your plant selection, click cancel.
 
 @#$#@#$#@
 ## WHAT IS IT?
+This is the game Plants vs. Zombies with the plants peashooter, snow pea, sunflower, wall-nut, and potato mine. The zombies present are the normal zombie, cone zombie, sports zombie, and gargantuan. The zombies are trying to cross your yard and you have to stop them by strategically placing plants in your yard to try to stop them.
 
-(a general understanding of what the model is trying to show or explain)
+## GAME MECHANICS
+To start the game, click load game and select a difficulty level. Then to run the game, click the play/pause button. To collect sun, click the sun appearing on the screen. This is the currency used for all things in the game. To place plants, click the button of the plant you want to place and drag it onto the screen, clicking on where you want it to be placed. To place a plant you must have enough sun, and the cooldown timer also has to be 0. To cancel a plant selection, click cancel. To get rid of an existing plant, click shovel and then click the plant you want to kill, the plant will disappear. 
 
-## HOW IT WORKS
+## HOW PLANTS WORK
+Sunflower : generates sun at regular intervals
+Peashooter : shoots bullets.
+Snow pea : shoots bullets that slow the enemy.
+Wall-nut : does not shoot, but stands as a shield.
+Potato mine: after a short activation period, will explode when zombies step on it. Otherwise it is susceptible to damage. 
 
-(what rules the agents use to create the overall behavior of the model)
-
-## HOW TO USE IT
-
-(how to use the model, including a description of each of the items in the Interface tab)
-
-## THINGS TO NOTICE
-
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+## CREDITS
+Creator: Alvin Li
+Instruction: Mr. Brooks
+Testers: Ivan Chen, Ivan Wei, Bryan Zhang, Jeremy Ku-Benjet, Maxwell Zen, Andrew Juang
+Inspired by the popular game Plants vs. Zombies, available on any device. References from the PvZ wiki.
 @#$#@#$#@
 default
 true
@@ -931,16 +910,16 @@ Polygon -7500403 true true 150 5 40 250 150 205 260 250
 
 cone
 false
-7
-Polygon -7500403 true false 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
-Polygon -7500403 true false 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
-Polygon -7500403 true false 182 213 184 228 205 245 212 246 191 227 189 211
+0
+Polygon -7500403 true true 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
+Polygon -7500403 true true 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
+Polygon -7500403 true true 182 213 184 228 205 245 212 246 191 227 189 211
 Polygon -13345367 true false 185 188 195 215 177 219 167 188 181 182
 Polygon -13345367 true false 156 202 163 218 141 250 112 249 137 217 132 205 152 176
 Polygon -6459832 true false 129 144 112 160 104 170 110 185 132 165
 Rectangle -1 true false 120 91 124 97
 Rectangle -1 true false 135 87 140 93
-Polygon -7500403 true false 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
+Polygon -7500403 true true 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
 Circle -1 true false 146 61 21
 Circle -1 true false 105 64 18
 Circle -16777216 true false 127 74 6
@@ -979,17 +958,22 @@ Line -16777216 false 113 180 143 176
 Line -16777216 false 144 176 180 182
 Line -16777216 false 181 183 192 191
 
+explode
+false
+0
+Circle -955883 true false 75 75 150
+
 garg
 false
-7
-Polygon -7500403 true false 85 101 83 118 86 133 93 142 96 152 94 162 99 166 112 167 122 125
+0
+Polygon -7500403 true true 85 101 83 118 86 133 93 142 96 152 94 162 99 166 112 167 122 125
 Polygon -6459832 true false 110 202 100 211 109 222 149 219 142 196
 Polygon -13345367 true false 107 158 110 205 141 200 139 157
 Polygon -13345367 true false 190 138 193 193 141 201 140 159 174 133
-Polygon -7500403 true false 108 141 107 159 131 162 146 159 161 148 158 127
+Polygon -7500403 true true 108 141 107 159 131 162 146 159 161 148 158 127
 Polygon -6459832 true false 110 47 127 41 151 44 173 51 193 58 179 76 156 92 156 99 160 121 160 127 131 140 111 146 106 140 104 122 99 114 89 103 82 98
-Polygon -7500403 true false 88 39 80 42 71 53 69 64 67 70 70 77 74 89 75 101 90 103 99 100 107 95 117 82 116 67 114 54 106 43
-Polygon -7500403 true false 192 60 177 65 169 81 156 92 156 97 157 115 158 128 160 148 161 161 156 167 159 178 160 186 176 185 192 173 196 159 188 156 188 142 198 126 198 113 199 97 199 82 199 72
+Polygon -7500403 true true 88 39 80 42 71 53 69 64 67 70 70 77 74 89 75 101 90 103 99 100 107 95 117 82 116 67 114 54 106 43
+Polygon -7500403 true true 192 60 177 65 169 81 156 92 156 97 157 115 158 128 160 148 161 161 156 167 159 178 160 186 176 185 192 173 196 159 188 156 188 142 198 126 198 113 199 97 199 82 199 72
 Polygon -16777216 false false 191 62 182 62 175 72 166 82 158 90 156 97 160 162 156 167 160 185 177 185 188 175 195 161 188 156 188 143 197 125 200 81 197 69
 Line -16777216 false 139 159 142 203
 Polygon -6459832 true false 142 201 128 205 131 221 147 226 173 221 203 217 193 193
@@ -1023,9 +1007,9 @@ Polygon -16777216 true false 105 154 59 71 27 104 94 180 98 173 41 106 60 84 101
 
 mine
 false
-0
+4
 Polygon -6459832 true false 69 237 77 243 92 255 112 259 145 259 165 259 194 255 213 245 221 234 215 211 203 191 178 177 144 171 116 174 94 186 80 202 75 217
-Rectangle -7500403 true true 134 150 143 183
+Rectangle -7500403 true false 134 150 143 183
 Circle -2674135 true false 118 120 43
 Polygon -16777216 true false 149 211 151 216 157 227 169 228 171 219 169 210 163 202 156 200 150 202
 Polygon -16777216 true false 181 201 183 206 189 217 201 218 203 209 201 200 195 192 188 190 182 192
@@ -1051,6 +1035,18 @@ Circle -16777216 false false 208 233 26
 Line -16777216 false 194 256 202 249
 Line -16777216 false 202 252 211 254
 Circle -16777216 false false 192 249 25
+
+minedown
+false
+0
+Rectangle -7500403 true true 134 225 143 258
+Circle -2674135 true false 118 195 43
+Circle -6459832 true false 135 249 24
+Circle -6459832 true false 117 247 26
+Circle -6459832 true false 98 252 25
+Circle -16777216 false false 96 252 26
+Circle -16777216 false false 133 248 26
+Circle -16777216 false false 117 249 25
 
 pea
 true
@@ -1106,16 +1102,16 @@ Polygon -13840069 true false 150 247 154 258 152 273 140 282 122 283 110 273 96 
 
 sports
 false
-7
-Polygon -14835848 true true 150 201 156 220 137 223 131 191 149 191
-Polygon -7500403 true false 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
-Polygon -7500403 true false 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
-Polygon -7500403 true false 182 213 184 228 205 245 212 246 191 227 189 211
-Polygon -14835848 true true 185 188 195 215 177 219 167 188 181 182
+0
+Polygon -14835848 true false 150 201 156 220 137 223 131 191 149 191
+Polygon -7500403 true true 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
+Polygon -7500403 true true 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
+Polygon -7500403 true true 182 213 184 228 205 245 212 246 191 227 189 211
+Polygon -14835848 true false 185 188 195 215 177 219 167 188 181 182
 Polygon -2674135 true false 129 144 112 160 104 170 110 185 132 165
 Rectangle -1 true false 120 91 124 97
 Rectangle -1 true false 135 87 140 93
-Polygon -7500403 true false 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
+Polygon -7500403 true true 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
 Circle -1 true false 146 61 21
 Circle -1 true false 105 64 18
 Circle -16777216 true false 127 74 6
@@ -1141,7 +1137,7 @@ Line -16777216 false 103 168 110 182
 Polygon -13345367 true false 154 56 143 56 136 57 125 57 113 58 120 44 136 40 150 41 159 49 161 56 147 54 113 59
 Polygon -13791810 true false 118 50 85 51 85 56 118 55
 Rectangle -1 true false 152 145 167 153
-Polygon -7500403 true false 140 221 145 232 124 250 132 257 136 249 155 233 149 219
+Polygon -7500403 true true 140 221 145 232 124 250 132 257 136 249 155 233 149 219
 Polygon -2674135 true false 120 250 120 263 128 267 144 268 150 263 154 255 145 249 141 249
 
 sun
@@ -1210,16 +1206,16 @@ Line -16777216 false 170 163 173 163
 
 zombie
 false
-7
-Polygon -7500403 true false 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
-Polygon -7500403 true false 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
-Polygon -7500403 true false 182 213 184 228 205 245 212 246 191 227 189 211
+0
+Polygon -7500403 true true 105 173 89 167 88 171 94 175 98 178 93 176 85 179 87 185 94 186 111 183
+Polygon -7500403 true true 117 198 109 200 103 206 103 212 107 210 112 205 110 209 110 217 116 218 120 217 120 211 127 207 129 198 123 195
+Polygon -7500403 true true 182 213 184 228 205 245 212 246 191 227 189 211
 Polygon -13345367 true false 185 188 195 215 177 219 167 188 181 182
 Polygon -13345367 true false 156 202 163 218 141 250 112 249 137 217 132 205 152 176
 Polygon -6459832 true false 129 144 112 160 104 170 110 185 132 165
 Rectangle -1 true false 120 91 124 97
 Rectangle -1 true false 135 87 140 93
-Polygon -7500403 true false 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
+Polygon -7500403 true true 110 59 128 50 141 47 155 50 165 57 173 63 175 72 174 89 166 101 151 109 142 118 126 119 116 112 116 106 124 103 130 106 138 103 138 97 131 94 123 96 116 97 111 92 108 84 104 76 103 68 111 60
 Circle -1 true false 146 61 21
 Circle -1 true false 105 64 18
 Circle -16777216 true false 127 74 6
