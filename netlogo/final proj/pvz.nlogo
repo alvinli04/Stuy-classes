@@ -136,7 +136,7 @@ to load
     ask patch -9 -13
     [
       ;print distancexy mouse-xcor mouse-ycor
-      if distancexy mouse-xcor mouse-ycor <= 1.5 ;and mouse-down?
+      if distancexy mouse-xcor mouse-ycor <= 1.5 and mouse-down?
       [
         ;print "hi"
         set difficulty "easy"
@@ -521,10 +521,46 @@ to waves
   ]
   if difficulty = "hard"
   [
-
-    bigWaveMessage 10
-    makezombie 2 "zombie" 20
-    if ticker > 20 * 20 [set noMore true]
+    makeZombie 1 "zombie" 25
+    makeZombie 5 "zombie" 50
+    makeZombie 3 "zombie" 80
+    makeZombie 4 "zombie" 100
+    makeZombie 1 "zombie" 110
+    makeZombie 5 "cone" 125
+    makeZombie 2 "cone" 150
+    makeZombie 3 "cone" 180
+    makeZombie 4 "zombie" 190
+    makeZombie 2 "cone" 195
+    makeZombie 3 "cone" 200
+    bigWaveMessage 210
+    makezombie 2 "zombie" 230
+    makeZombie 2 "sports" 231
+    makeZombie 5 "cone" 231
+    makeZombie 5 "zombie" 230
+    makeZombie 4 "garg" 231
+    makeZombie 1 "zombie" 230
+    makeZombie 3 "zombie" 231
+    makeZombie 1 "cone" 240
+    makeZombie 3 "cone" 240
+    makeZombie 1 "zombie" 245
+    makeZombie 2 "cone" 245
+    makeZombie 4 "sports" 250
+    makeZombie 5 "zombie" 250
+    makeZombie 1 "sports" 260
+    makeZombie 3 "zombie" 260
+    makeZombie 1 "sports" 270
+    makeZombie 2 "zombie" 280
+    makeZombie 4 "zombie" 285
+    makeZombie 5 "cone" 290
+    makeZombie 5 "zombie" 300
+    bigWaveMessage 305
+    makeZombie 1 "zombie" 315
+    makeZombie 1 "zombie" 317
+    makeZombie 2 "garg" 315
+    makeZombie 3 "zombie" 315
+    makeZombie 4 "cone" 315
+    makeZombie 5 "sports" 317
+    if ticker > 325 * 20 [set noMore true]
   ]
 end
 
