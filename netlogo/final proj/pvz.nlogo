@@ -304,6 +304,12 @@ to plantActions
         setxy py:runresult "placeX" py:runresult "placeY"
         set state "idle"
         set occupied false
+        set placed true
+        if shape = "mine"
+        [
+          set minedown true
+          set shape "minedown"
+        ]
       ]
 
       if shovel?
@@ -312,12 +318,6 @@ to plantActions
         set occupied false
         set shovel? false
         ask plants-here [die]
-      ]
-      set placed true
-      if shape = "mine"
-      [
-        set minedown true
-        set shape "minedown"
       ]
     ]
   ]
@@ -399,6 +399,7 @@ to bulletActions
       [
         set state "frozen"
         set health health - 10
+        set mytick 0
       ]
     ]
     die
@@ -434,25 +435,25 @@ to makeZombie [lane myshape time]
 end
 
 to makeZombieTest [lane myshape]
-    create-zombies 1
+  create-zombies 1
+  [
+    set color gray
+    set shape myshape
+    set state "mobile"
+    ifelse shape != "garg"
     [
-      set color gray
-      set shape myshape
-      set state "mobile"
-      ifelse shape != "garg"
-      [
-        set size 9
-      ]
-      [
-        set size 13
-      ]
-      py:set "shape" myshape
-      set health py:runresult "health[shape]"
-      set damage py:runresult "damage[shape]"
-      set speed py:runresult "speed[shape]"
-      py:set "mylane" lane
-      let laneycor py:runresult "lane[mylane]"
-      setxy 34 laneycor
+      set size 9
+    ]
+    [
+      set size 13
+    ]
+    py:set "shape" myshape
+    set health py:runresult "health[shape]"
+    set damage py:runresult "damage[shape]"
+    set speed py:runresult "speed[shape]"
+    py:set "mylane" lane
+    let laneycor py:runresult "lane[mylane]"
+    setxy 34 laneycor
   ]
 end
 
@@ -467,7 +468,6 @@ to zombieActions
   [
     set xcor xcor - 0.013 * speed
     set color blue
-    set mytick 0
   ]
   if mytick = 180
   [
@@ -475,26 +475,22 @@ to zombieActions
   ]
   if mytick mod 20 = 0
   [
+    let prevstate state
     set state "attacking"
-    attack
-  ]
-  if shape = "sports"
-  [
-    if mytick mod 10 = 0
-    [
-      set state "attacking"
-      attack
-    ]
+    attack prevstate
   ]
   set mytick mytick + 1
 end
 
-to attack
+to attack [prev]
   let mydamage damage
-  if count [plants-at -2 0] of patch round xcor round ycor = 0 or [shape] of one-of [plants-at -2 0] of patch round xcor round ycor = "mine"
+  if count [plants-at -2 0] of patch round xcor round ycor = 0 or [shape] of one-of [plants-at -2 0] of patch round xcor round ycor = "mine" and prev = "mobile"
   [
-    ;print round xcor - 2
     set state "mobile"
+  ]
+  if count [plants-at -2 0] of patch round xcor round ycor = 0 or [shape] of one-of [plants-at -2 0] of patch round xcor round ycor = "mine" and prev = "frozen"
+  [
+    set state "frozen"
   ]
   if state = "attacking"
   [
@@ -790,7 +786,7 @@ BUTTON
 916
 492
 potato mine: 25 sun
-if sunNum < 25 [stop]\nif ticker < t5 + 340 [stop]\nset t5 ticker\nset lastcost 25\nplacePlant \"mine\"\nask plants with [state = \"persuit\"]\n[set placed false]\nset sunNum sunNum - 25\nset lastpressed \"mine\"\n
+if sunNum < 25 [stop]\nif ticker < t5 + 400 [stop]\nset t5 ticker\nset lastcost 25\nplacePlant \"mine\"\nask plants with [state = \"persuit\"]\n[set placed false]\nset sunNum sunNum - 25\nset lastpressed \"mine\"\n
 NIL
 1
 T
@@ -807,7 +803,7 @@ MONITOR
 917
 545
 cooldown
-cooldown t5 17
+cooldown t5 20
 0
 1
 11
@@ -888,7 +884,20 @@ to cancel your plant selection, click cancel.
 This is the game Plants vs. Zombies with the plants peashooter, snow pea, sunflower, wall-nut, and potato mine. The zombies present are the normal zombie, cone zombie, sports zombie, and gargantuan. The zombies are trying to cross your yard and you have to stop them by strategically placing plants in your yard to try to stop them.
 
 ## GAME MECHANICS
-To start the game, click load game and select a difficulty level. Then to run the game, click the play/pause button. To collect sun, click the sun appearing on the screen. This is the currency used for all things in the game. To place plants, click the button of the plant you want to place and drag it onto the screen, clicking on where you want it to be placed. To place a plant you must have enough sun, and the cooldown timer also has to be 0. To cancel a plant selection, click cancel. To get rid of an existing plant, click shovel and then click the plant you want to kill, the plant will disappear. 
+To start the game, click load game and select a difficulty level. Then to run the game, click the play/pause button. 
+To collect sun, click the sun appearing on the screen. This is the currency used for all things in the game. 
+To place plants, click the button of the plant you want to place and drag it onto the screen, clicking on where you want it to be placed. To place a plant you must have enough sun, and the cooldown timer also has to be 0. To cancel a plant selection, click cancel. To get rid of an existing plant, click shovel and then click the plant you want to kill, the plant will disappear.
+When a zombie is in front of a plant, it will attack the plant until either the plant dies or the zombie dies.
+
+## TIPS
+Try to have a lot of sunflowers so you can have lots of sun to defeat later waves of the game.
+Space out plants so that all rows are covered.
+Use sun efficiently!
+
+## THINGS TO TRY
+Beat the game on both easy and hard mode.
+Win the game with only 3 sunflowers.
+Win the game without having to use any lawnmowers.
 
 ## HOW PLANTS WORK
 Sunflower : generates sun at regular intervals
@@ -961,7 +970,13 @@ Line -16777216 false 181 183 192 191
 explode
 false
 0
-Circle -955883 true false 75 75 150
+Polygon -1184463 true false 78 84 111 99 123 69 149 99 213 69 206 110 258 129 217 158 244 193 197 204 183 234 148 211 110 239 102 200 63 189 78 159 50 127 86 116
+Polygon -2674135 true false 98 180 92 128 104 125 115 126 120 133 123 142 121 149 113 152 102 153 106 179
+Polygon -2674135 true false 179 173 173 121 185 118 196 119 201 126 204 135 202 142 194 145 183 146 187 172
+Circle -2674135 true false 127 134 38
+Circle -1184463 true false 132 140 27
+Circle -1184463 true false 98 131 16
+Circle -1184463 true false 180 124 16
 
 garg
 false
