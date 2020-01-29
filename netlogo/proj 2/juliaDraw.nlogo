@@ -1,10 +1,11 @@
-globals [backcol currscale]
+globals [backcol currscale currset currz]
 patches-own [re im prev]
 
 ;;init/clear function
 to init
   ca
-  ask patches [set prev [0]]
+  set currscale 1
+  ask patches [set prev []]
   set backcol blue
 end
 
@@ -12,9 +13,33 @@ end
 to zoom
   if mouse-down?
   [
-    drawMandelbrot backcol (currscale * 2) mouse-xcor mouse-ycor
-    stop
+    if currset = "mandelbrot"
+    [
+      drawMandelbrot backcol (currscale * 2) mouse-xcor mouse-ycor
+      stop
+    ]
+    if currset = "julia"
+    [
+      drawJulia backcol (currscale * 2) mouse-xcor mouse-ycor
+      stop
+    ]
   ]
+end
+
+to revert
+  ask patches
+  [
+    carefully
+    [
+      set pcolor black
+      set pcolor item (length prev - 2) prev
+      set prev but-last prev
+    ]
+    [
+      user-message "nothing to revert to!"
+    ]
+  ]
+  set currscale currscale / 2
 end
 
 ;;complex number operators
@@ -57,6 +82,7 @@ to-report inM [c]
 end
 
 to drawMandelbrot [col scale x y]
+  set currset "mandelbrot"
   ask patches [set pcolor black]
   set backcol col
   set currscale scale
@@ -66,8 +92,8 @@ to drawMandelbrot [col scale x y]
   [
     p -> ask p
     [
-      set re (pxcor + x) * b
-      set im (pycor + y) * b
+      set re (x + (1 / scale) * (pxcor - x)) * .01
+      set im (y + (1 / scale) * (pycor - y)) * .01
       let c (list re im)
       ifelse inM c = -1
       [
@@ -75,20 +101,61 @@ to drawMandelbrot [col scale x y]
       ]
       [
         set pcolor approximate-hsb (inM c + col + 120)  255 255
-        set prev lput (inM c + col + 120) prev
       ]
+      set prev (lput pcolor prev)
+    ]
+  ]
+end
+
+to-report inJulia [z c]
+  let i 0
+  while [i < 100]
+  [
+    set z add (sq z) c
+    if mag z > 2
+    [
+      report i + 1 - ln (log (mag z) 2)
+    ]
+    set i i + 1
+  ]
+  report -1
+end
+
+to drawJulia [col scale x y]
+  set currset "julia"
+  ask patches [set pcolor black]
+  set backcol col
+  set currscale scale
+  let c (list myRe myIm)
+  let b 1 / (scale  * 100)
+  let L (list patches)
+  foreach L
+  [
+    p -> ask p
+    [
+     set re (x + (1 / scale) * (pxcor - x)) * .01
+      set im (y + (1 / scale) * (pycor - y)) * .01
+      let z (list re im)
+      ifelse inJulia z c = -1
+      [
+       set pcolor black
+      ]
+      [
+        set pcolor approximate-hsb (inJulia z c + col + 120)  255 255
+      ]
+      set prev (lput pcolor prev)
     ]
   ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-212
-74
-719
-582
+40
+22
+624
+607
 -1
 -1
-1.0
+1.15431
 1
 10
 1
@@ -109,10 +176,10 @@ ticks
 30.0
 
 BUTTON
-113
-161
-176
-194
+642
+168
+705
+201
 NIL
 zoom
 T
@@ -125,42 +192,199 @@ NIL
 NIL
 1
 
+BUTTON
+641
+82
+730
+115
+start/clear
+init
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+640
+216
+706
+249
+NIL
+revert
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+642
+323
+785
+356
+Mandelbrot set
+set currscale 1\nask patches [set prev []]\ndrawMandelbrot backcol 1 0 0
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+642
+385
+720
+418
+Julia Set
+set currscale 1\nask patches [set prev []]\ndrawJulia backcol 1 0 0
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+640
+431
+724
+491
+myRe
+0.285
+1
+0
+Number
+
+INPUTBOX
+728
+431
+813
+491
+myIm
+0.01
+1
+0
+Number
+
+TEXTBOX
+637
+24
+787
+46
+Menu
+18
+0.0
+1
+
+TEXTBOX
+751
+84
+878
+112
+press before starting the program
+11
+15.0
+1
+
+TEXTBOX
+738
+194
+888
+236
+press zoom and click on any part of the graph to zoom into it. Press revert to un-zoom.
+11
+0.0
+1
+
+TEXTBOX
+801
+335
+951
+353
+Draw the Mandelbrot set!
+11
+0.0
+1
+
+TEXTBOX
+742
+387
+892
+415
+Draw the Julia Set centered around (myRe)+(myIm)i.
+11
+0.0
+1
+
+TEXTBOX
+796
+98
+946
+116
+or to clear memory.
+11
+0.0
+1
+
+TEXTBOX
+645
+140
+795
+159
+Visuals
+15
+0.0
+1
+
+TEXTBOX
+644
+293
+794
+312
+Different Sets
+15
+0.0
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This is a program that aids in the exploration of the Mandelbrot and Julia Sets. It can draw any of these sets as well as zoom in on them to explore the fractal deeper.
 
-## HOW IT WORKS
+## SOME MATH BACKGROUND
+A Julia Set is a set of numbers {z} such that on the Complex plane, recursively performing z=z^2+c for some complex c will not cause z to diverge. The Mandelbrot set is similar; it recurses w=w^2+z where w starts from 0 and tests for divergence.
+When drawing a Julia Set, choosing any c that is within the Mandelbrot set will construct a *connected* Julia Set, while any c that is outside of the Mandelbrot set will construct a disconnected Julia Set, also know as Fatou Dust.
 
-(what rules the agents use to create the overall behavior of the model)
+## USAGE
+Click the init button before starting.
 
-## HOW TO USE IT
+After drawing a Julia Set or Mandelbrot set with the menu options, click on any part of the set to zoom in. Allow some time for the picture to render.
 
-(how to use the model, including a description of each of the items in the Interface tab)
+Reverting returns the image to the previous state.
 
-## THINGS TO NOTICE
+The color of each part of the graph returned corresponds to the number of iterations it takes for the complex number corresponding to that pixel to diverge, or excape a radius of 2. It runs for 100 iterations, so the results are fairly accurate. Any point that does not diverge will be colored black, meaning that it is part of the drawn set.
 
-(suggested things for the user to notice while running the model)
+## CREDITS
+Creator: Alvin Li
+Instruction: Mr. Brooks
 
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+P.S. Maybe get this onto the models library to replace the current Mandelbrot set model?
 @#$#@#$#@
 default
 true
